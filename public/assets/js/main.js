@@ -1,124 +1,339 @@
-// src/js/modules/resourceTemplates.js
-var resourceTemplates = {
-  s3: {
-    name: "Amazon S3",
-    fields: [
-      {
-        label: "Bucket ARN",
-        id: "bucket-arn",
-        type: "text",
-        placeholder: "arn:aws:s3:::my-bucket",
-        required: true
-      }
-    ],
-    generateWidget: function(data) {
-      const bucketName = data["bucket-arn"].split(":").pop();
-      return {
-        type: "metric",
-        width: 12,
-        height: 6,
-        properties: {
-          view: "timeSeries",
-          title: `S3 Metrics - ${bucketName}`,
-          metrics: [
-            ["AWS/S3", "NumberOfObjects", "StorageType", "AllStorageTypes", "BucketName", bucketName],
-            [".", "BucketSizeBytes", ".", "StandardStorage", ".", "."]
-          ],
-          region: "us-east-1",
-          stat: "Average",
-          period: 300
-        }
-      };
+// src/data/templates/s3.json
+var s3_default = {
+  name: "Amazon S3",
+  fields: [
+    {
+      label: "Bucket ARN",
+      id: "bucket-arn",
+      type: "text",
+      placeholder: "arn:aws:s3:::my-bucket",
+      required: true
+    },
+    {
+      label: "Bucket Name",
+      id: "bucket-name",
+      type: "text",
+      placeholder: "my-bucket",
+      required: true
     }
-  },
-  lambda: {
-    name: "AWS Lambda",
-    fields: [
-      {
-        label: "Function Name",
-        id: "function-name",
-        type: "text",
-        placeholder: "my-lambda-function",
-        required: true
-      }
-    ],
-    generateWidget: function(data) {
-      return {
-        type: "metric",
-        width: 12,
-        height: 6,
-        properties: {
-          view: "timeSeries",
-          title: `Lambda Metrics - ${data["function-name"]}`,
-          metrics: [
-            ["AWS/Lambda", "Invocations", "FunctionName", data["function-name"]],
-            [".", "Errors", ".", "."],
-            [".", "Duration", ".", "."],
-            [".", "Throttles", ".", "."]
-          ],
-          region: "us-east-1",
-          stat: "Average",
-          period: 300
-        }
-      };
-    }
-  },
-  ec2: {
-    name: "Amazon EC2",
-    fields: [
-      {
-        label: "Instance ID",
-        id: "instance-id",
-        type: "text",
-        placeholder: "i-1234567890abcdef0",
-        required: true
-      }
-    ],
-    generateWidget: function(data) {
-      return {
-        type: "metric",
-        width: 12,
-        height: 6,
-        properties: {
-          view: "timeSeries",
-          title: `EC2 Metrics - ${data["instance-id"]}`,
-          metrics: [
-            ["AWS/EC2", "CPUUtilization", "InstanceId", data["instance-id"]],
-            [".", "NetworkIn", ".", "."],
-            [".", "NetworkOut", ".", "."],
-            [".", "DiskReadBytes", ".", "."],
-            [".", "DiskWriteBytes", ".", "."]
-          ],
-          region: "us-east-1",
-          stat: "Average",
-          period: 300
-        }
-      };
+  ],
+  metricTemplate: {
+    type: "metric",
+    width: 12,
+    height: 6,
+    properties: {
+      view: "timeSeries",
+      metrics: [
+        ["AWS/S3", "NumberOfObjects", "StorageType", "AllStorageTypes", "BucketName", "{bucket-arn}"],
+        [".", "BucketSizeBytes", ".", "StandardStorage", ".", "."]
+      ],
+      region: "us-east-1",
+      stat: "Average",
+      period: 300
     }
   }
 };
 
-// src/js/modules/dashboardGenerator.js
-function generateDashboardJson(dashboardName, resourceElements) {
-  const widgets = [];
-  resourceElements.forEach((resourceElement) => {
-    const resourceType = resourceElement.dataset.resourceType;
-    const template = resourceTemplates[resourceType];
-    const data = {};
-    template.fields.forEach((field) => {
-      const input = document.getElementById(`${field.id}-${resourceElement.dataset.resourceId}`);
-      if (input) {
-        data[field.id] = input.value;
-      }
-    });
-    if (Object.values(data).every((val) => val)) {
-      widgets.push(template.generateWidget(data));
+// src/data/templates/lambda.json
+var lambda_default = {
+  name: "AWS Lambda",
+  fields: [
+    {
+      label: "Function Name",
+      id: "function-name",
+      type: "text",
+      placeholder: "my-lambda-function",
+      required: true
     }
-  });
-  return {
-    widgets
-  };
+  ],
+  metricTemplate: {
+    type: "metric",
+    width: 12,
+    height: 6,
+    properties: {
+      view: "timeSeries",
+      metrics: [
+        ["AWS/Lambda", "Invocations", "FunctionName", "{function-name}"],
+        [".", "Errors", ".", "."],
+        [".", "Duration", ".", "."],
+        [".", "Throttles", ".", "."]
+      ],
+      region: "us-east-1",
+      stat: "Average",
+      period: 300
+    }
+  }
+};
+
+// src/data/templates/ec2.json
+var ec2_default = {
+  name: "Amazon EC2",
+  fields: [
+    {
+      label: "Instance ID",
+      id: "instance-id",
+      type: "text",
+      placeholder: "i-1234567890abcdef0",
+      required: true
+    },
+    {
+      label: "Region",
+      id: "region",
+      type: "text",
+      placeholder: "us-east-1",
+      required: true,
+      default: "us-east-1"
+    }
+  ],
+  metricTemplate: {
+    type: "metric",
+    width: 12,
+    height: 6,
+    properties: {
+      view: "timeSeries",
+      title: "EC2 Metrics - {instance-id}",
+      metrics: [
+        ["AWS/EC2", "CPUUtilization", "InstanceId", "{instance-id}"],
+        [".", "NetworkIn", ".", "."],
+        [".", "NetworkOut", ".", "."],
+        [".", "DiskReadBytes", ".", "."],
+        [".", "DiskWriteBytes", ".", "."],
+        [".", "StatusCheckFailed", ".", "."]
+      ],
+      region: "{region}",
+      stat: "Average",
+      period: 300
+    }
+  }
+};
+
+// src/data/templates/alb.json
+var alb_default = {
+  name: "ALB",
+  fields: [
+    {
+      label: "ALB ARN",
+      id: "alb-arn",
+      type: "text",
+      placeholder: "app/testALB/12346566",
+      required: true
+    },
+    {
+      label: "Target Group ARN",
+      id: "tg-arn",
+      type: "text",
+      placeholder: "targetgroup/http/445566",
+      required: true
+    },
+    {
+      label: "Region",
+      id: "region",
+      type: "text",
+      placeholder: "us-east-1",
+      required: true,
+      default: "us-east-1"
+    }
+  ],
+  metricTemplate: {
+    widgets: [
+      {
+        type: "text",
+        x: 0,
+        y: 0,
+        width: 18,
+        height: 2,
+        properties: {
+          markdown: "# Application Load Balancer"
+        }
+      },
+      {
+        type: "metric",
+        x: 0,
+        y: 2,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "HTTPCode_ELB_5XX_Count", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          period: 60,
+          stat: "Sum"
+        }
+      },
+      {
+        type: "metric",
+        x: 9,
+        y: 2,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          stat: "Sum",
+          period: 60
+        }
+      },
+      {
+        type: "metric",
+        x: 0,
+        y: 8,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          stat: "Average",
+          period: 60
+        }
+      },
+      {
+        type: "metric",
+        x: 9,
+        y: 8,
+        width: 9,
+        height: 6,
+        properties: {
+          view: "timeSeries",
+          stacked: false,
+          stat: "Sum",
+          period: 60,
+          metrics: [
+            ["AWS/ApplicationELB", "ClientTLSNegotiationErrorCount", "LoadBalancer", "{alb-arn}"]
+          ],
+          region: "{region}"
+        }
+      },
+      {
+        type: "metric",
+        x: 0,
+        y: 14,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "HTTPCode_ELB_502_Count", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          period: 60,
+          stat: "Sum"
+        }
+      },
+      {
+        type: "metric",
+        x: 9,
+        y: 14,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "HTTPCode_ELB_503_Count", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          period: 60,
+          stat: "Sum"
+        }
+      },
+      {
+        type: "metric",
+        x: 0,
+        y: 20,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "HTTPCode_ELB_504_Count", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          period: 60,
+          stat: "Sum"
+        }
+      },
+      {
+        type: "metric",
+        x: 9,
+        y: 20,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", "{tg-arn}", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          stat: "Average",
+          period: 60
+        }
+      },
+      {
+        type: "metric",
+        x: 0,
+        y: 26,
+        width: 9,
+        height: 6,
+        properties: {
+          metrics: [
+            ["AWS/ApplicationELB", "UnHealthyHostCount", "TargetGroup", "{tg-arn}", "LoadBalancer", "{alb-arn}"]
+          ],
+          view: "timeSeries",
+          stacked: false,
+          region: "{region}",
+          stat: "Average",
+          period: 60
+        }
+      }
+    ]
+  }
+};
+
+// src/data/templates/index.js
+var templates = { s3: s3_default, lambda: lambda_default, ec2: ec2_default, alb: alb_default };
+function getTemplate(resourceType) {
+  return templates[resourceType];
 }
+function getAllTemplates() {
+  return templates;
+}
+
+// src/js/modules/resourceTemplates.js
+var resourceTemplates = {
+  getTemplate: function(resourceType) {
+    return getTemplate(resourceType);
+  },
+  getAllTemplates: function() {
+    return getAllTemplates();
+  },
+  generateWidget: function(resourceType, data) {
+    const template = getTemplate(resourceType);
+    if (!template) return null;
+    const widget = JSON.parse(JSON.stringify(template.metricTemplate));
+    const stringifiedWidget = JSON.stringify(widget);
+    const replacedWidget = stringifiedWidget.replace(/\{(\w+-?\w+)\}/g, (match, fieldId) => {
+      if (fieldId === "bucket-arn") {
+        return data[fieldId]?.split(":").pop() || match;
+      }
+      return data[fieldId] || match;
+    });
+    return JSON.parse(replacedWidget);
+  }
+};
 
 // src/js/modules/uiHandlers.js
 var resourcesContainer = document.getElementById("resources-container");
@@ -133,7 +348,7 @@ function createResourceSelectionModal() {
         <div class="modal-content">
             <h3>Select Resource Type</h3>
             <div class="resource-options">
-                ${Object.entries(resourceTemplates).map(([key, resource]) => `
+                ${Object.entries(resourceTemplates.getAllTemplates()).map(([key, resource]) => `
                     <button class="resource-option" data-resource-type="${key}">
                         ${resource.name}
                     </button>
@@ -157,7 +372,11 @@ function createResourceSelectionModal() {
 }
 function addResource(resourceType) {
   const resourceId = Date.now();
-  const template = resourceTemplates[resourceType];
+  const template = resourceTemplates.getTemplate(resourceType);
+  if (!template) {
+    console.error(`Template not found for resource type: ${resourceType}`);
+    return;
+  }
   const resourceElement = document.createElement("div");
   resourceElement.className = "resource-form";
   resourceElement.dataset.resourceId = resourceId;
@@ -198,13 +417,31 @@ function addResource(resourceType) {
 function updateJsonOutput() {
   const dashboardName = dashboardNameInput.value || "MyDashboard";
   const resourceElements = document.querySelectorAll(".resource-form");
-  const dashboardJson = generateDashboardJson(dashboardName, resourceElements);
+  const widgets = [];
+  resourceElements.forEach((resourceElement) => {
+    const resourceType = resourceElement.dataset.resourceType;
+    const data = {};
+    const template = resourceTemplates.getTemplate(resourceType);
+    template.fields.forEach((field) => {
+      const input = document.getElementById(`${field.id}-${resourceElement.dataset.resourceId}`);
+      if (input) {
+        data[field.id] = input.value;
+      }
+    });
+    if (Object.values(data).every((val) => val)) {
+      const widget = resourceTemplates.generateWidget(resourceType, data);
+      if (widget) {
+        widgets.push(widget);
+      }
+    }
+  });
+  const dashboardJson = {
+    widgets
+  };
   jsonOutput.textContent = JSON.stringify(dashboardJson, null, 2);
 }
 function initUIHandlers() {
-  addResourceBtn.addEventListener("click", function() {
-    addResourceBtn.addEventListener("click", createResourceSelectionModal);
-  });
+  addResourceBtn.addEventListener("click", createResourceSelectionModal);
   dashboardNameInput.addEventListener("input", updateJsonOutput);
   copyButton.addEventListener("click", function() {
     navigator.clipboard.writeText(jsonOutput.textContent).then(() => {

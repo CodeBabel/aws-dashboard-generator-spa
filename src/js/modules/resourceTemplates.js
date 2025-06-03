@@ -1,107 +1,32 @@
-export const resourceTemplates = {
-    s3: {
-        name: "Amazon S3",
-        fields: [
-            {
-                label: "Bucket ARN",
-                id: "bucket-arn",
-                type: "text",
-                placeholder: "arn:aws:s3:::my-bucket",
-                required: true
-            }
-        ],
-        generateWidget: function(data) {
-            const bucketName = data['bucket-arn'].split(':').pop();
-            return {
-                type: "metric",
-                width: 12,
-                height: 6,
-                properties: {
-                    view: "timeSeries",
-                    title: `S3 Metrics - ${bucketName}`,
-                    metrics: [
-                        [ "AWS/S3", "NumberOfObjects", "StorageType", "AllStorageTypes", "BucketName", bucketName ],
-                        [ ".", "BucketSizeBytes", ".", "StandardStorage", ".", "." ]
-                    ],
-                    region: "us-east-1",
-                    stat: "Average",
-                    period: 300
-                }
-            };
-        }
+import { getTemplate, getAllTemplates, addTemplate } from '../../data/templates/index.js';
+
+const resourceTemplates = {
+    getTemplate: function(resourceType) {
+        return getTemplate(resourceType);
     },
-    lambda: {
-        name: "AWS Lambda",
-        fields: [
-            {
-                label: "Function Name",
-                id: "function-name",
-                type: "text",
-                placeholder: "my-lambda-function",
-                required: true
-            }
-        ],
-        generateWidget: function(data) {
-            return {
-                type: "metric",
-                width: 12,
-                height: 6,
-                properties: {
-                    view: "timeSeries",
-                    title: `Lambda Metrics - ${data['function-name']}`,
-                    metrics: [
-                        [ "AWS/Lambda", "Invocations", "FunctionName", data['function-name'] ],
-                        [ ".", "Errors", ".", "." ],
-                        [ ".", "Duration", ".", "." ],
-                        [ ".", "Throttles", ".", "." ]
-                    ],
-                    region: "us-east-1",
-                    stat: "Average",
-                    period: 300
-                }
-            };
-        }
+    
+    getAllTemplates: function() {
+        return getAllTemplates();
     },
-    ec2: {
-        name: "Amazon EC2",
-        fields: [
-            {
-                label: "Instance ID",
-                id: "instance-id",
-                type: "text",
-                placeholder: "i-1234567890abcdef0",
-                required: true
+    
+    generateWidget: function(resourceType, data) {
+        const template = getTemplate(resourceType);
+        if (!template) return null;
+        
+        const widget = JSON.parse(JSON.stringify(template.metricTemplate));
+        
+        // Process all replacements in the entire widget object
+        const stringifiedWidget = JSON.stringify(widget);
+        const replacedWidget = stringifiedWidget.replace(/\{(\w+-?\w+)\}/g, (match, fieldId) => {
+            // Handle special field transformations
+            if (fieldId === 'bucket-arn') {
+                return data[fieldId]?.split(':').pop() || match; // Extract bucket name from ARN
             }
-        ],
-        generateWidget: function(data) {
-            return {
-                type: "metric",
-                width: 12,
-                height: 6,
-                properties: {
-                    view: "timeSeries",
-                    title: `EC2 Metrics - ${data['instance-id']}`,
-                    metrics: [
-                        [ "AWS/EC2", "CPUUtilization", "InstanceId", data['instance-id'] ],
-                        [ ".", "NetworkIn", ".", "." ],
-                        [ ".", "NetworkOut", ".", "." ],
-                        [ ".", "DiskReadBytes", ".", "." ],
-                        [ ".", "DiskWriteBytes", ".", "." ]
-                    ],
-                    region: "us-east-1",
-                    stat: "Average",
-                    period: 300
-                }
-            };
-        }
+            return data[fieldId] || match; // Return original if not found
+        });
+        
+        return JSON.parse(replacedWidget);
     }
 };
 
-// Function to add new resource templates dynamically
-export function addResourceTemplate(name, template) {
-    if (!resourceTemplates[name]) {
-        resourceTemplates[name] = template;
-        return true;
-    }
-    return false;
-}
+export { resourceTemplates };

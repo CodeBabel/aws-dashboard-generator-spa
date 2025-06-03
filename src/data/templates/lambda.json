@@ -1,0 +1,29 @@
+{
+    "name": "AWS Lambda",
+    "fields": [
+      {
+        "label": "Function Name",
+        "id": "function-name",
+        "type": "text",
+        "placeholder": "my-lambda-function",
+        "required": true
+      }
+    ],
+    "metricTemplate": {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "view": "timeSeries",
+        "metrics": [
+          ["AWS/Lambda", "Invocations", "FunctionName", "{function-name}"],
+          [".", "Errors", ".", "."],
+          [".", "Duration", ".", "."],
+          [".", "Throttles", ".", "."]
+        ],
+        "region": "us-east-1",
+        "stat": "Average",
+        "period": 300
+      }
+    }
+  }

@@ -1,0 +1,40 @@
+{
+    "name": "Amazon EC2",
+    "fields": [
+      {
+        "label": "Instance ID",
+        "id": "instance-id",
+        "type": "text",
+        "placeholder": "i-1234567890abcdef0",
+        "required": true
+      },
+      {
+        "label": "Region",
+        "id": "region",
+        "type": "text",
+        "placeholder": "us-east-1",
+        "required": true,
+        "default": "us-east-1"
+      }
+    ],
+    "metricTemplate": {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "view": "timeSeries",
+        "title": "EC2 Metrics - {instance-id}",
+        "metrics": [
+          ["AWS/EC2", "CPUUtilization", "InstanceId", "{instance-id}"],
+          [".", "NetworkIn", ".", "."],
+          [".", "NetworkOut", ".", "."],
+          [".", "DiskReadBytes", ".", "."],
+          [".", "DiskWriteBytes", ".", "."],
+          [".", "StatusCheckFailed", ".", "."]
+        ],
+        "region": "{region}",
+        "stat": "Average",
+        "period": 300
+      }
+    }
+  }

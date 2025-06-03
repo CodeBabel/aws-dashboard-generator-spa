@@ -8,7 +8,6 @@ const jsonOutput = document.getElementById('json-output');
 const copyButton = document.getElementById('copy-button');
 const dashboardNameInput = document.getElementById('dashboard-name');
 
-
 // Add this function to create resource selection modal
 function createResourceSelectionModal() {
     const modal = document.createElement('div');
@@ -17,7 +16,7 @@ function createResourceSelectionModal() {
         <div class="modal-content">
             <h3>Select Resource Type</h3>
             <div class="resource-options">
-                ${Object.entries(resourceTemplates).map(([key, resource]) => `
+                ${Object.entries(resourceTemplates.getAllTemplates()).map(([key, resource]) => `
                     <button class="resource-option" data-resource-type="${key}">
                         ${resource.name}
                     </button>
@@ -48,7 +47,12 @@ function createResourceSelectionModal() {
 // Add resource to the form
 export function addResource(resourceType) {
     const resourceId = Date.now();
-    const template = resourceTemplates[resourceType];
+    const template = resourceTemplates.getTemplate(resourceType);
+    
+    if (!template) {
+        console.error(`Template not found for resource type: ${resourceType}`);
+        return;
+    }
     
     const resourceElement = document.createElement('div');
     resourceElement.className = 'resource-form';
@@ -100,19 +104,42 @@ export function addResource(resourceType) {
 export function updateJsonOutput() {
     const dashboardName = dashboardNameInput.value || 'MyDashboard';
     const resourceElements = document.querySelectorAll('.resource-form');
-    const dashboardJson = generateDashboardJson(dashboardName, resourceElements);
+    
+    const widgets = [];
+    
+    resourceElements.forEach(resourceElement => {
+        const resourceType = resourceElement.dataset.resourceType;
+        const data = {};
+        
+        // Collect all field values
+        const template = resourceTemplates.getTemplate(resourceType);
+        template.fields.forEach(field => {
+            const input = document.getElementById(`${field.id}-${resourceElement.dataset.resourceId}`);
+            if (input) {
+                data[field.id] = input.value;
+            }
+        });
+        
+        // Generate widget if all required fields are filled
+        if (Object.values(data).every(val => val)) {
+            const widget = resourceTemplates.generateWidget(resourceType, data);
+            if (widget) {
+                widgets.push(widget);
+            }
+        }
+    });
+    
+    const dashboardJson = {
+        widgets: widgets
+    };
+    
     jsonOutput.textContent = JSON.stringify(dashboardJson, null, 2);
 }
 
 // Initialize UI event handlers
 export function initUIHandlers() {
     // Add resource button click handler
-    addResourceBtn.addEventListener('click', function() {
-        // For now, default to adding S3 resource
-        // In a more complete implementation, you'd show a modal to select resource type
-        // addResource('s3');
-        addResourceBtn.addEventListener('click', createResourceSelectionModal);
-    });
+    addResourceBtn.addEventListener('click', createResourceSelectionModal);
 
     // Dashboard name input change handler
     dashboardNameInput.addEventListener('input', updateJsonOutput);

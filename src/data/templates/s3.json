@@ -1,0 +1,34 @@
+{
+    "name": "Amazon S3",
+    "fields": [
+      {
+        "label": "Bucket ARN",
+        "id": "bucket-arn",
+        "type": "text",
+        "placeholder": "arn:aws:s3:::my-bucket",
+        "required": true
+      },
+      {
+        "label": "Bucket Name",
+        "id": "bucket-name",
+        "type": "text",
+        "placeholder": "my-bucket",
+        "required": true
+      }
+    ],
+    "metricTemplate": {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "view": "timeSeries",
+        "metrics": [
+          ["AWS/S3", "NumberOfObjects", "StorageType", "AllStorageTypes", "BucketName", "{bucket-arn}"],
+          [".", "BucketSizeBytes", ".", "StandardStorage", ".", "."]
+        ],
+        "region": "us-east-1",
+        "stat": "Average",
+        "period": 300
+      }
+    }
+  }
