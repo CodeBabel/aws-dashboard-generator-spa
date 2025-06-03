@@ -1,20 +1,21 @@
 {
-    "name": "cloudwatch-dashboard-generator",
-    "version": "1.0.0",
-    "description": "A tool to generate CloudWatch Dashboard JSON definitions",
-    "scripts": {
-      "build": "npm run build:css && npm run build:js",
-      "build:css": "sass src/scss/styles.scss public/assets/css/styles.css",
-      "build:js": "esbuild src/js/app.js --bundle --outfile=public/assets/js/main.js --format=esm",
-      "dev": "npm run build && live-server public",
-      "watch": "npm run build && concurrently \"npm run watch:css\" \"npm run watch:js\"",
-      "watch:css": "sass --watch src/scss/styles.scss public/assets/css/styles.css",
-      "watch:js": "esbuild src/js/app.js --bundle --outfile=public/assets/js/main.js --format=esm --watch"
-    },
-    "devDependencies": {
-      "concurrently": "^7.6.0",
-      "esbuild": "^0.15.16",
-      "live-server": "^1.2.2",
-      "sass": "^1.56.1"
-    }
+  "name": "cloudwatch-dashboard-generator",
+  "version": "1.0.0",
+  "description": "A tool to generate CloudWatch Dashboard JSON definitions",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "sass src/scss/styles.scss public/assets/css/styles.css",
+    "build:js": "esbuild src/js/app.js --bundle --outfile=public/assets/js/main.js --format=esm",
+    "dev": "http-server public -p 8080",
+    "watch": "npm run build && concurrently \"npm run watch:css\" \"npm run watch:js\"",
+    "watch:css": "sass --watch src/scss/styles.scss public/assets/css/styles.css",
+    "watch:js": "esbuild src/js/app.js --bundle --outfile=public/assets/js/main.js --format=esm --watch"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.1",
+    "esbuild": "^0.25.5",
+    "http-server": "^14.1.1",
+    "sass": "^1.69.0",
+    "vite": "^5.2.0"
   }
+}
